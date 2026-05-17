@@ -1,0 +1,22 @@
+GUIDANCE_ENABLED = True
+target_peri = 166 * 1000 # (m) target periapsis
+target_apo = 166 * 1000 # (m) target apoapsis
+booster_pitch_start = 530 # (m) when does the booster start pitching
+final_ascent_ceiling = 80*1000 # (m)
+final_path_angle = 75.0 # (deg) 75.0
+turn_shape = 0.34  # 1 = linear, 2 = steeper towards the end
+
+ascent_profile = np.linspace(0, target_peri, 1000)
+ratio = np.clip(ascent_profile / target_peri, 0, 1)
+ascent_path = 90.0 - (np.power(ratio, turn_shape) * final_path_angle)
+ascent_path[ascent_profile < booster_pitch_start] = 90.0
+
+mission_phases = [
+    {'name': 'Liftoff', 'mode': 'burn', 'stage': 0, 'end': 'altitude', 'value': booster_pitch_start},
+    {'name': 'Ascent', 'mode': 'burn', 'stage': 0, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 2', 'mode': 'burn', 'stage': 1, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 3 LEO', 'mode': 'burn', 'stage': 2, 'end': 'orbit', 'value': None},
+    {'name': 'LEO Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 1000},
+    {'name': 'TLI', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
+    {'name': 'Final Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 6000},
+]
