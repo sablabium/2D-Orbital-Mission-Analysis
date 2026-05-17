@@ -32,15 +32,16 @@ G = 6.6742 * 10**-11 # Gravitational constant (SI unit)
 # Earth
 radius_Earth = 6.378e6 # meters
 mass_Earth = 5.972e24 # kg
+mu_Earth = G * mass_Earth
 # Moon
 radius_Luna = 1737400 # meters
 mass_Luna = 7.348e22
 ecc = 0.0549 # eccentricity
-per = 363300000 # (m) perigee
-apo = 405500000 # (m) apogee
+luna_per = 363300000 # (m) perigee
+luna_apo = 405500000 # (m) apogee
 incl = 0.0 # degrees in inclination
 orb_pd = 27.322 * 24 * 60 * 60 # (sec) Orbital Period
-a = (per + apo) / 2
+a = (luna_per + luna_apo) / 2
 init_degrees = 62 # Starting degrees of the moon in relation to Earth
 
 
@@ -56,7 +57,7 @@ t_span = (0, period)
 
 ### ROCKET ###
 x0 = 0 # m
-z0 = radius_Earth*2 + 1 # m
+z0 = radius_Earth + 1 # m
 velx0 = 0.0 # m/s
 velz0 = 0.0 # m/s
 
@@ -90,6 +91,7 @@ booster_pitch_start = 530 # (m) when does the booster start pitching
 final_ascent_ceiling = 80*1000 # (m)
 final_path_angle = 75.0 # (deg) 75.0
 turn_shape = 0.34 # 1 = linear, 2 = steeper towards the end
+tli_margin = 1000 # (m) time window margin from the periapsis of luna
 
 ## Open loop
 ascent_profile = np.linspace(0, target_peri, 1000)
@@ -105,8 +107,8 @@ mission_phases = [
     #{'name': 'Coast 2', 'mode': 'coast', 'stage': 1, 'end': 'duration', 'value': 30},
     {'name': 'Stage 3 LEO', 'mode': 'burn', 'stage': 2, 'end': 'orbit', 'value': None},
     {'name': 'LEO Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 2000},
-    #{'name': 'TLI', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
-    {'name': 'Final Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 206000},
+    {'name': 'TLI', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
+    {'name': 'Final Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 1000},
     # ending seconds of coasting, to see on the sim
 ]
 
@@ -141,12 +143,10 @@ class Aerodynamics():
 ## If we go to more planets - add name variations
 aeroModel = Aerodynamics('Earth')
 ### Moon Orbit
-def lunaOrbit(t):
-    ### Constant
-    mu = G * mass_Earth
+def lunaOrbit(t, peri_multiplier=1):
     ### Mean Anomaly M if the orbit was the perfect circle
     M = (2 * np.pi * t / orb_pd) + (init_degrees * np.pi / 180.0)
-    ### Solve Keplers Equation M = E - e*sin(E)
+    ### Solve Kepler Equation M = E - e*sin(E)
     ### We need to find E - Eccentric Anomaly
     ### 5 Is enough for moons Eccentricity,
     E = M
@@ -155,17 +155,16 @@ def lunaOrbit(t):
 
     ### Calculate True Anomaly Theta, This is where velocity change happens, depending
     ### On The Moons Place in the Orbit
-    th = 2 * np.arctan2(np.sqrt(1 + ecc) * np.sin(E / 2), np.sqrt(1 - ecc) * np.cos(E / 2))
-
+    th = 2 * np.arctan2(np.sqrt(1 + ecc) * np.sin(E / 2), np.sqrt(1 - ecc) * np.cos(E / 2)) * peri_multiplier
     ### Using Kepler's First Law for distance
     r = a * (1 - ecc**2)/(1 + ecc * np.cos(th))
 
     ### Velocity Magnitude (speed)
-    speed = np.sqrt(mu * (2/r - 1/a))
+    speed = np.sqrt(mu_Earth * (2/r - 1/a))
 
     ### Calculating Moon Velocity
-    vx = -np.sqrt(mu / (a * (1 - ecc**2))) * np.sin(th)
-    vz =  np.sqrt(mu / (a * (1 - ecc**2))) * (ecc + np.cos(th))
+    vx = -np.sqrt(mu_Earth / (a * (1 - ecc**2))) * np.sin(th)
+    vz =  np.sqrt(mu_Earth / (a * (1 - ecc**2))) * (ecc + np.cos(th))
 
     # Convert to Cartesian coordinates
     x = r * np.cos(th) # X coordinate
@@ -281,8 +280,10 @@ class Mission:
         if self.phase['name'] in ['Liftoff', 'Ascent']:
             pitch = np.interp(alt, ascent_profile + booster_pitch_start, ascent_path)
             return pitch, 1.0
-        else:
+        elif self.phase['end'] != 'tli':
             return self._peg(state, r, alt)
+        else:
+            return self._mtm(state,r)
     ## Closed loop
     def _peg(self, state, r, alt):
         x, z, velx, velz, mass = state
@@ -321,8 +322,35 @@ class Mission:
         # Convert to global space
         dv_vec_global = np.sin(pitch_angle) * r_hat + np.cos(pitch_angle) * t_hat
         angle = np.degrees(np.arctan2(dv_vec_global[1], dv_vec_global[0]))
-
         return angle, throttle
+    ## Maneuver Targeting Module
+    def _mtm(self, state, r):
+        x, z, velx, velz, mass = state
+        per_x, per_z = lunaOrbit(0,0) # Moon Periapsis location
+        ## At what radians is the moon periapsis
+        per_rads = np.arctan2(per_z, per_x)
+
+        ### Determining Rocket Orbit Eccentricity in order to get the exact pos of orbit angled opposite to moon
+        ## Need to call once only
+        determind = False
+        if ~determind:
+            V = np.sqrt(velx**2 + velz**2)
+            v_scal = np.asarray([velx,velz])
+            r_scal = np.asarray([x,z])
+            e_vector = ((V ** 2 - (mu_Earth / r)) * r_scal - np.dot(r_scal, v_scal) * v_scal) / mu_Earth
+            e = np.linalg.norm(e_vector)
+            print(e)
+            determind = True
+
+        ## True Anomaly Theta in reverse to moon periapsis, flipped to 180deg
+        th = per_rads + np.pi
+        ## radius of rocket orbit, add eccentricity
+        r = a * (1 - e ** 2) / (1 + e * np.cos(th))
+
+        x = r * np.cos(th)  # X coordinate
+        z = r * np.sin(th)  # z coordinate
+        print(z, x)
+        return 0.0,0.0
     ## Used for a gatekeeper
     def check_phase_end(self, t,state,t_start):
         x, z, velx, velz, mass = state
@@ -347,13 +375,14 @@ class Mission:
             print(f"  checking burnout: {elapsed:.0f} >= {t_burn:.0f} ? {elapsed >= t_burn}")
             return elapsed >= t_burn
 
-        if end in ('orbit', 'tli'):
+        if end == 'orbit':
             r_hat = np.asarray([x, z]) / r
             t_hat = np.asarray([z, -x]) / r
             v_tan = np.dot([velx, velz], t_hat)
             v_circ = np.sqrt(G * mass_Earth / r)
             return v_tan >= v_circ  # removing v_rad condition for now
-
+        if end == 'tli':
+            return alt >= luna_per
         return False
 
 guidance_log = []
@@ -414,12 +443,14 @@ class Simulation:
                 stage = self.mission.phase['stage']
                 t_burn = self.vehicle.fuels[stage] * self.vehicle.isps[stage] * 9.81 / self.vehicle.thrusts[stage]
                 return (t - self.t_phase_start) - t_burn
-            if end in ('orbit', 'tli'):
+            if end == 'orbit':
                 r_hat = np.asarray([x, z]) / r
                 t_hat = np.asarray([z, -x]) / r
                 v_tan = np.dot([velx, velz], t_hat)
                 v_circ = np.sqrt(G * mass_Earth / r)
                 return v_tan - v_circ
+            if end == 'tli':
+                return alt >= luna_per
             return 1.0
 
         event.terminal = True
