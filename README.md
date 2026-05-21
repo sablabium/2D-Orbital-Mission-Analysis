@@ -42,6 +42,8 @@ STAGES = [
 ]
 ```
 
+<img width="1536" height="754" alt="mass" src="https://github.com/user-attachments/assets/c82656b0-d20c-484e-a69d-de393ff634a6" />
+
 <img width="1536" height="754" alt="ascent_1" src="https://github.com/user-attachments/assets/882f6bea-1fd3-48de-827a-bbd6a82b915e" />
 
 ## Orbital Mechanics
