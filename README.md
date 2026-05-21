@@ -27,6 +27,7 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 <img width="800" height="800" alt="animation" src="https://github.com/user-attachments/assets/c9a3e91f-a3d6-4d15-9376-087a72c924f4" />
 
 ## Vehicle Simulation
+
 - Multi-stage rocket support
 - Wet/dry mass tracking
 - Stage separation
@@ -36,6 +37,7 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 <img width="1536" height="754" alt="ascent_1" src="https://github.com/user-attachments/assets/882f6bea-1fd3-48de-827a-bbd6a82b915e" />
 
 ## Orbital Mechanics
+
 - Newtonian gravity
 - Two-body and Earth–Moon interactions
 - Elliptical Moon orbit
@@ -45,6 +47,7 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 <img width="1918" height="1021" alt="Orbit" src="https://github.com/user-attachments/assets/605a19fc-ba16-4e05-8119-aea7e48140af" />
 
 ## Atmospheric Model
+
 - Atmospheric density interpolation from real data
 - Aerodynamic drag calculations
 - Dynamic velocity losses during ascent
@@ -52,7 +55,9 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 <img width="640" height="480" alt="Figure_7" src="https://github.com/user-attachments/assets/dabbaa2b-d355-4167-af7e-a0f488247a72" />
 
 # Guidance System
+
 ## Ascent Guidance
+
 The launch vehicle performs a gravity turn using configurable pitch shaping. With parameters for _pitch start, ascent path, final booster angle and such._
 
 ## Orbital Insertion
@@ -62,6 +67,21 @@ A **PEG**-inspired guidance mode attempts to circularize into Low Earth Orbit.
 The simulation computes launch timing windows and performs a continuous `prograde burn` until the transfer trajectory reaches lunar distance.
 
 <img width="1918" height="1017" alt="ascent_h_s_m" src="https://github.com/user-attachments/assets/5233d4d0-04dd-46c8-aadd-235186c962c2" />
+
+# Development Notes
+
+Early mission planning, transfer geometry calculations, and guidance experimentation were initially prototyped on whitebaord/paper before implementation.
+
+<table width="100%">
+  <tr>
+    <td width="50%" align="left">
+      <img width="100%" alt="Whiteboard2" src="https://github.com/user-attachments/assets/3a2d8f03-d541-45fa-a2ee-c0aa8e57d31d" />
+  </td>
+    <td width="50%" align="right">
+      <img width="100%" alt="Whiteboard1" src="https://github.com/user-attachments/assets/c761d536-d02b-43c9-a629-addf26e3ac8e" />
+    </td>
+  </tr>
+</table>
 
 ## Mission Sequencing
 The mission is organized into _flexible event-driven_ phases, which can be freely modified:
@@ -74,14 +94,37 @@ The mission is organized into _flexible event-driven_ phases, which can be freel
 - Translunar Injection Burn
 - Lunar Transfer Coast
 
-<img width="1037" height="411" alt="mission_phases" src="https://github.com/user-attachments/assets/27fee00f-0348-4655-9ae3-66c88fd3f8b3" />
+```text
+mission_phases = [
+    {'name': 'Liftoff', 'mode': 'burn', 'stage': 0, 'end': 'altitude', 'value': booster_pitch_start},
+    {'name': 'Ascent', 'mode': 'burn', 'stage': 0, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 2', 'mode': 'burn', 'stage': 1, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 3 LEO', 'mode': 'burn', 'stage': 2, 'end': 'orbit', 'value': None},
+    {'name': 'Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 4000},
+    {'name': 'LEO Coast', 'mode': 'coast', 'stage': 2, 'end': 'luna_in_place', 'value': None},
+    {'name': 'LEO Coast Window', 'mode': 'coast', 'stage': 2, 'end': 'tli_window', 'value': None},
+    {'name': 'TLI Burn', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
+    {'name': 'TLI Coast', 'mode': 'coast', 'stage': 2, 'end': 'altitude', 'value': luna_per},
+    {'name': 'Luna Orbit Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 40000},
+]
+```
 
 ## Physics Model
-The simulator numerically integrates motion using:
+### Main Equations used
+The simulator numerically integrates motion using:\
 `F = m * a`
 
-and Newtonian gravity:
+and Newtonian gravity:\
 `F = G * ( m1 * m2 / r ^ 2 )`
+
+Orbital Velocity / Vis-Viva Equation"\
+`v = sqrt( mu * (2/r - 1/a))`
+
+Kepler’s Third Law:\
+`T = 2pi * sqrt( a^3/mu )`
+
+Rocket Equation (Tsiolkovsky):\
+`dv = Isp * g0 * ln( m0/mt )`
 
 The equations of motion are propagated using:\
 `scipy.integrate.solve_ivp`\
@@ -155,7 +198,7 @@ Planned upgrades include:
 ## Install dependencies
 `pip install numpy scipy matplotlib`
 ## Run
-`python main.py`
+`python Main.py`
 
 # Why I Built This
 This project was created as a personal engineering and physics challenge to better understand:
