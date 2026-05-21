@@ -63,7 +63,7 @@ class Aerodynamics():
         self.name = name
         if name == 'Earth':
             ### import aeromodel for earth
-            data = np.loadtxt('earth_athmosphere_density.txt')
+            data = np.loadtxt('../earth_athmosphere_density.txt')
 
 
 ### Gravitational Acceleration

@@ -96,7 +96,7 @@ class Aerodynamics():
         self.name = name
         if name == 'Earth':
             ### import aeromodel for earth
-            data = np.loadtxt('earth_athmosphere_density.txt')
+            data = np.loadtxt('../earth_athmosphere_density.txt')
             self.altitude = data[:,0]
             self.density = data[:,1]
             self.rhos = self.density[0] #1.225  # kg/m**3
