@@ -7,7 +7,6 @@ Created on : Sun May 10 4:04 PM 2026
 import numpy as np
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
-from IPython.terminal.shortcuts.auto_suggest import accept
 
 plt.close('all')
 ### DEFINE CONSTANT PARAMETERS

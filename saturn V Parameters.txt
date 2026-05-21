@@ -1,0 +1,31 @@
+STAGES = [
+    {'name': 'Stage 1', 'm_wet': 2214e3, 'm_dry': 13e3, 'thrust': 33e6, 'isp': 250},
+    {'name': 'Stage 2', 'm_wet': 470e3, 'm_dry': 43e3, 'thrust': 44e5, 'isp': 420},
+    {'name': 'Stage 3', 'm_wet': 1205e2, 'm_dry': 152e2, 'thrust': 1e6, 'isp': 421},
+]
+
+GUIDANCE_ENABLED = True
+target_peri = 166 * 1000 # (m) target periapsis
+target_apo = 166 * 1000 # (m) target apoapsis
+booster_pitch_start = 530 # (m) when does the booster start pitching
+final_ascent_ceiling = 80*1000 # (m)
+final_path_angle = 75.0 # (deg) 75.0
+turn_shape = 0.30  # 1 = linear, 2 = steeper towards the end
+
+ascent_profile = np.linspace(0, target_peri, 1000)
+ratio = np.clip(ascent_profile / target_peri, 0, 1)
+ascent_path = 90.0 - (np.power(ratio, turn_shape) * final_path_angle)
+ascent_path[ascent_profile < booster_pitch_start] = 90.0
+
+mission_phases = [
+    {'name': 'Liftoff', 'mode': 'burn', 'stage': 0, 'end': 'altitude', 'value': booster_pitch_start},
+    {'name': 'Ascent', 'mode': 'burn', 'stage': 0, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 2', 'mode': 'burn', 'stage': 1, 'end': 'burnout', 'value': None},
+    {'name': 'Stage 3 LEO', 'mode': 'burn', 'stage': 2, 'end': 'orbit', 'value': None},
+    {'name': 'Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 4000},
+    {'name': 'LEO Coast', 'mode': 'coast', 'stage': 2, 'end': 'luna_in_place', 'value': None},
+    {'name': 'LEO Coast Window', 'mode': 'coast', 'stage': 2, 'end': 'tli_window', 'value': None},
+    {'name': 'TLI Burn', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
+    {'name': 'TLI Coast', 'mode': 'coast', 'stage': 2, 'end': 'altitude', 'value': luna_per},
+    {'name': 'Luna Orbit Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 40000},
+]

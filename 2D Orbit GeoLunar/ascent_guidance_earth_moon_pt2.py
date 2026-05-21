@@ -262,7 +262,7 @@ class Mission:
         print(f'Starting phase: {self.phase["name"]}')
         return True
     def guidance(self, t, state):
-        # 1. CRITICAL: If we are in any coast phase, bypass PEG completely.
+        # If we are in any coast phase, bypass PEG completely.
         # This completely stops the chattering freeze during long timelines.
         if 'Coast' in self.phase['name']:
             return 0.0, 0.0
@@ -289,19 +289,19 @@ class Mission:
         v_target = np.sqrt(G * mass_Earth / r_target)
         v_circ = np.sqrt(G * mass_Earth / r)
 
-        # 2. ODE-FRIENDLY SMOOTH THROTTLE
-        # Calculate horizontal velocity deficit
+        ## ODE-FRIENDLY SMOOTH THROTTLE
+        ## Calculate horizontal velocity deficit
         v_deficit = v_target - v_tan
 
-        # If we are more than 50 m/s away, throttle is 1.0 (Full power).
-        # As we get within 50 m/s of target orbit, smoothly ramp throttle down to 0.0.
-        # If we match or overshoot target, throttle locks to 0.0 perfectly.
+        ## If we are more than 50 m/s away, throttle is 1.0 (Full power).
+        ## As we get within 50 m/s of target orbit, smoothly ramp throttle down to 0.0.
+        ## If we match or overshoot target, throttle locks to 0.0 perfectly.
         throttle = np.clip(v_deficit / 50.0, 0.0, 1.0)
 
-        # Target a smooth vertical profile to capture target altitude
+        ## Target a smooth vertical profile to capture target altitude
         target_v_rad = np.clip((r_target - r) * 0.01, -50, 150)
 
-        # Gravity compensation + proportional tracking
+        ## Gravity compensation + proportional tracking
         base_pitch = np.radians(45.0) * (1.0 - np.clip(v_tan / v_circ, 0, 1))
         pitch_correction = (target_v_rad - v_rad) / 800.0
         pitch_angle = base_pitch + pitch_correction
@@ -438,7 +438,7 @@ class Simulation:
                 self.t_phase_start = t_current
                 continue
 
-            # 2. Integrate if phase targets haven't been met yet
+            ## Integrate if phase targets haven't been met yet
             sol = sci.solve_ivp(
                 self.derivatives,
                 t_span=(t_current, t_current + period),

@@ -41,7 +41,7 @@ t_span = (0, period)
 ### ROCKET ###
 x0 = 0  # m
 z0 = radius_Earth + 1  # m
-velx0 = 465.1  # m/s Earth linear velocity is around 465.1 at equator
+velx0 = 0.0  # m/s Earth linear velocity is around 465.1 at equator
 velz0 = 0.0  # m/s
 
 STAGES = [
@@ -63,9 +63,9 @@ CD = 0.4  # Drag Coefficient
 GUIDANCE_ENABLED = True
 target_peri = 166 * 1000 # (m) target periapsis
 target_apo = 166 * 1000 # (m) target apoapsis
-booster_pitch_start = 530 # (m) when does the booster start pitching
-final_path_angle = 75.0 # (deg) 75.0
-turn_shape = 0.30 # 1 = linear, 2 = steeper towards the end
+booster_pitch_start = 630 # (m) when does the booster start pitching
+final_path_angle = 80.0 # (deg) 75.0
+turn_shape = 0.28 # 1 = linear, 2 = steeper towards the end
 
 ### TLI Guidance ###
 ## tli_overshoot = 100000 # (m) difference in target height and luna orbit ( > 0 - overshoot, < 0 undershoot )
@@ -81,6 +81,7 @@ mission_phases = [
     {'name': 'Ascent', 'mode': 'burn', 'stage': 0, 'end': 'burnout', 'value': None},
     {'name': 'Stage 2', 'mode': 'burn', 'stage': 1, 'end': 'burnout', 'value': None},
     {'name': 'Stage 3 LEO', 'mode': 'burn', 'stage': 2, 'end': 'orbit', 'value': None},
+    {'name': 'Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 4000},
     ## Coast in LEO until the moon is in the correct angle
     {'name': 'LEO Coast', 'mode': 'coast', 'stage': 2, 'end': 'luna_in_place', 'value': None},
     ## Coast in LEO until the perfect alignment window strikes
@@ -88,7 +89,7 @@ mission_phases = [
     ## One continuous TLI burn that stops ONLY when target apoapsis matches lunar distance
     {'name': 'TLI Burn', 'mode': 'burn', 'stage': 2, 'end': 'tli', 'value': None},
     {'name': 'TLI Coast', 'mode': 'coast', 'stage': 2, 'end': 'altitude', 'value': luna_per},
-    {'name': 'Luna Orbit Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 10000},
+    {'name': 'Luna Orbit Coast', 'mode': 'coast', 'stage': 2, 'end': 'duration', 'value': 40000},
 ]
 
 class Aerodynamics():
@@ -347,7 +348,7 @@ class Mission:
                 return True
             a_orbit = - (G * mass_Earth) / (2.0 * energy)
             r_apo = (2.0 * a_orbit) - r
-            return r_apo >= luna_per + 0  # tolerance
+            return r_apo >= luna_per  # tolerance
         if end == 'luna_in_place':
             ## continuous angular error with dynamic TLI time
             error = self._luna_in_place_error(t, state)
@@ -500,7 +501,7 @@ def main():
         world,
         target_peri=target_peri,
         target_apo=target_apo,
-        arrival_offset_deg=-0.5,  # Adjust offset interception point angle relative to Moon position
+        arrival_offset_deg=--1.5,  # Adjust offset interception point angle relative to Moon position
         window_angle_deg=1.0,  # Total tolerance window margin around the target ignition geometry
         luna_interception_angle_deg=15.0,
     )
@@ -633,17 +634,20 @@ def main():
             ani = animation.FuncAnimation(fig, update, frames=len(tout) // step, interval=20, blit=True, repeat=True)
             plt.grid()
             plt.legend()
-            plt.show()
+            # from matplotlib.animation import PillowWriter
+            # ani.save("animation2.gif", writer=PillowWriter(fps=12))
+            # plt.show()
+
             return ani
 
         # plt_air_density()
-        # plt_altitude()
-        # plt_speed()
-        # plt_mass()
-        # plt_angle()
-        # plt_throttle()
+        plt_altitude()
+        plt_speed()
+        plt_mass()
+        plt_angle()
+        plt_throttle()
         plt_orbit2D()
-        plt_orbit2D_animation()
+        # plt_orbit2D_animation()
 
         plt.show()
     output_plots()

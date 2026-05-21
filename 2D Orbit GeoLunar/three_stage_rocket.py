@@ -53,9 +53,6 @@ t3end = t3start + 270
 max_thrust3 = 1000000*1 # Newtons Second stage Thrust in
 angle3 = 90
 
-# Create the aeroModel variable which is instance
-# of the class Aerodynamics, putting it here so it's global
-aeroModel = Aerodynamics(name)
 
 ### Aerodynamics Class
 class Aerodynamics():
@@ -65,6 +62,9 @@ class Aerodynamics():
             ### import aeromodel for earth
             data = np.loadtxt('../earth_athmosphere_density.txt')
 
+# Create the aeroModel variable which is instance
+# of the class Aerodynamics, putting it here so it's global
+aeroModel = Aerodynamics(name)
 
 ### Gravitational Acceleration
 def gravity(x,z):
@@ -175,7 +175,6 @@ def Derivatives(state, t):
     statedot = np.asarray([xdot,zdot, ddot[0],ddot[1], mdot])
 
     return statedot
-
 
 ################## MAIN SCRIPT #################
 
