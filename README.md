@@ -34,6 +34,14 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 - Variable thrust and ISP per stage
 - Mass flow simulation
 
+```text
+STAGES = [
+    {'name': 'Stage 1', 'm_wet': 2214e3, 'm_dry': 13e3, 'thrust': 33e6, 'isp': 250},
+    {'name': 'Stage 2', 'm_wet': 470e3, 'm_dry': 43e3, 'thrust': 44e5, 'isp': 420},
+    {'name': 'Stage 3', 'm_wet': 1205e2, 'm_dry': 152e2, 'thrust': 1e6, 'isp': 421},
+]
+```
+
 <img width="1536" height="754" alt="ascent_1" src="https://github.com/user-attachments/assets/882f6bea-1fd3-48de-827a-bbd6a82b915e" />
 
 ## Orbital Mechanics
@@ -44,7 +52,11 @@ The project started as a launch/orbit sandbox and gradually evolved into a large
 - Orbital energy calculations
 - Apoapsis/periapsis estimation
 
-<img width="1918" height="1021" alt="Orbit" src="https://github.com/user-attachments/assets/605a19fc-ba16-4e05-8119-aea7e48140af" />
+<img width="100%" alt="Orbit" src="https://github.com/user-attachments/assets/605a19fc-ba16-4e05-8119-aea7e48140af" />
+
+<img width="100%" alt="luna_orbit" src="https://github.com/user-attachments/assets/d0c55801-4f03-4150-bc9e-bffe0cc47951" />
+
+
 
 ## Atmospheric Model
 
