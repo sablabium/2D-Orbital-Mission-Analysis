@@ -84,7 +84,7 @@ The simulation computes launch timing windows and performs a continuous `prograd
 
 # Development Notes
 
-Early mission planning, transfer geometry calculations, and guidance experimentation were initially prototyped on whitebaord/paper before implementation.
+Early mission planning, transfer geometry calculations, and guidance experimentation were initially prototyped on whiteboard/paper before implementation.
 
 <table width="100%">
   <tr>
@@ -131,7 +131,7 @@ The simulator numerically integrates motion using:\
 and Newtonian gravity:\
 `F = G * ( m1 * m2 / r ^ 2 )`
 
-Orbital Velocity / Vis-Viva Equation"\
+Orbital Velocity / Vis-Viva Equation\
 `v = sqrt( mu * (2/r - 1/a))`
 
 Kepler’s Third Law:\
